@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toyota Maintenance Schedule</title>
+<!--
+  Toyota Maintenance Menu: standalone build
+  - No dependencies, no build step. Plain HTML, CSS and JavaScript in one file.
+  - Fonts: place the Toyota Type .otf files in a "fonts" folder next to this file
+    (fonts/ToyotaType-Light.otf, -Regular.otf, -Semibold.otf, -Bold.otf, -Black.otf),
+    or change the @font-face URLs below to your CDN paths.
+  - Booking button URL: search for "book-a-service" below.
+  - Vehicle data (models, trims, engines) and service rules live in the <script> at the bottom.
+-->
+<style>
+@font-face{font-family:"Toyota Type";src:url("fonts/ToyotaType-Light.otf") format("opentype");font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:"Toyota Type";src:url("fonts/ToyotaType-Regular.otf") format("opentype");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Toyota Type";src:url("fonts/ToyotaType-Semibold.otf") format("opentype");font-weight:500 600;font-style:normal;font-display:swap}
+@font-face{font-family:"Toyota Type";src:url("fonts/ToyotaType-Bold.otf") format("opentype");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Toyota Type";src:url("fonts/ToyotaType-Black.otf") format("opentype");font-weight:800 900;font-style:normal;font-display:swap}
+[hidden]{display:none!important}
+
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:#1A1A1A;font-family:"Toyota Type","Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5}
+a{color:#EB0A1E}a:hover{color:#B30716}
+button{font:inherit}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #EB0A1E;outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lbl{font-size:13px;font-weight:600;color:#1A1A1A}
+.muted{color:#6B6E70}
+.dd{position:relative;display:flex;flex-direction:column;gap:6px}
+.dd-btn{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px 14px;background:#FFFFFF;border:1px solid #1A1A1A;border-radius:3px;color:#1A1A1A;cursor:pointer;text-align:left;font-size:15px}
+.dd-btn svg{flex-shrink:0}
+.dd-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;max-height:300px;overflow:auto;background:#FFFFFF;border:1px solid #D9D9D9;border-radius:3px;box-shadow:0 10px 28px rgba(0,0,0,.14);padding:4px 0;display:flex;flex-direction:column}
+.dd-opt{text-align:left;background:none;border:0;padding:10px 14px;cursor:pointer;color:#1A1A1A;display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.dd-opt:hover{background:#F2F2F2}
+.dd-opt.on{color:#EB0A1E;font-weight:600}
+.dd-opt .sub{color:#6B6E70;font-size:13px}
+.scrim{position:fixed;inset:0;background:transparent;border:0;z-index:20;cursor:default}
+.txt{width:100%;min-height:44px;padding:8px 14px;border:1px solid #1A1A1A;border-radius:3px;background:#FFFFFF;color:#1A1A1A;font:inherit}
+.txt::placeholder{color:#8A8D8F}
+.odo-in{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.seg-row{display:flex;gap:8px}
+.seg{flex:1;min-height:44px;padding:8px 12px;background:#FFFFFF;border:1px solid #D9D9D9;border-radius:3px;color:#EB0A1E;cursor:pointer;font-size:15px}
+.seg.on{border-color:#EB0A1E;font-weight:600}
+.tab{min-height:44px;padding:8px 16px;background:#FFFFFF;border:1px solid #1A1A1A;border-radius:3px;color:#1A1A1A;cursor:pointer;font-size:14px}
+.tab.on{background:#000000;color:#FFFFFF;border-color:#000000}
+.fgroup{display:flex;flex-direction:column;gap:14px;padding-block:20px;border-top:1px solid #D9D9D9}
+.fgroup:first-of-type{border-top:0;padding-top:0}
+.hint{font-size:13px;color:#6B6E70;margin:0}
+.card{background:#FFFFFF;border:1px solid #D9D9D9;border-radius:2px;min-width:0}
+.banner{color:#FFFFFF;font-size:14px;font-weight:500;padding:9px 20px}
+.b-due{background:#EB0A1E}.b-soon{background:#1A1A1A}.b-past{background:#6B6E70}
+.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #D9D9D9}
+.grp{padding:18px 20px;border-bottom:1px solid #D9D9D9;min-width:0}
+.grp:nth-child(odd){border-right:1px solid #D9D9D9}
+.grp h3{margin:0 0 10px;font-size:16px;font-weight:600;display:flex;gap:8px;align-items:baseline}
+.grp h3 span{font-size:13px;font-weight:500;color:#6B6E70}
+.grp ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.grp li{display:grid;grid-template-columns:12px minmax(0,1fr);gap:10px;font-size:14px;align-items:start}
+.grp li::before{content:"";width:9px;height:9px;margin-top:6px;border:1.5px solid #1A1A1A;border-radius:1px}
+.k-replace li::before{background:#EB0A1E;border-color:#EB0A1E}
+.k-perform li::before{background:#1A1A1A}
+.k-rec li::before{border-style:dashed;border-color:#6B6E70}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{border:1px solid #CFCFCF;border-radius:3px;padding:1px 7px;font-size:12px;white-space:nowrap;color:#1A1A1A;background:#FFFFFF}
+.chip.rec{border-style:dashed;color:#6B6E70}
+.lv{display:inline-block;font-weight:600;font-size:12px;padding:3px 10px;border-radius:999px;color:#FFFFFF;white-space:nowrap}
+.lv1{background:#6B6E70}.lv2{background:#1A1A1A}.lv3{background:#EB0A1E}
+.ms{list-style:none;margin:0;padding:0}
+.ms li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #E6E6E6;font-size:14px}
+.ms li:last-child{border-bottom:0}
+.ms .km{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tm li{flex-direction:column;gap:2px}
+.st{font-size:13px;font-weight:600}
+.st.warn{color:#EB0A1E}.st.ok{color:#1A1A1A}
+.hrow{display:grid;grid-template-columns:120px 92px minmax(0,1fr) 56px;gap:12px;align-items:center;width:100%;text-align:left;background:#FFFFFF;border:0;border-bottom:1px solid #E6E6E6;padding:10px 14px;cursor:pointer;color:#1A1A1A;font-size:14px}
+.hrow:hover{background:#F5F5F5}
+.hrow.past{color:#8A8D8F}
+.hrow.past .lv{opacity:.55}
+.hrow.next{background:#FDECEE}
+.hrow.sel{box-shadow:inset 4px 0 0 #EB0A1E}
+.hrow .kmc{font-weight:700;font-variant-numeric:tabular-nums}
+.hhead{display:grid;grid-template-columns:120px 92px minmax(0,1fr) 56px;gap:12px;padding:10px 14px;background:#EFF0F0;font-size:12px;font-weight:600;color:#1A1A1A;border-bottom:1px solid #D9D9D9}
+.mark{font-size:12px;font-weight:600;text-align:right}
+.mark.n{color:#EB0A1E}
+.linkbtn{background:none;border:0;padding:0;color:#EB0A1E;cursor:pointer;text-decoration:underline;font-size:14px}
+.btn-red{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;background:#EB0A1E;color:#FFFFFF;border-radius:3px;text-decoration:none;font-weight:500;font-size:15px}
+.btn-red:hover{background:#C70818;color:#FFFFFF}
+.btn-out{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;background:#FFFFFF;color:#1A1A1A;border:1px solid #D9D9D9;border-radius:3px;cursor:pointer;font-size:14px}
+.btn-out:hover{border-color:#1A1A1A}
+@media (max-width:640px){
+ .groups{grid-template-columns:minmax(0,1fr)}
+ .grp:nth-child(odd){border-right:0}
+ .hrow,.hhead{grid-template-columns:84px 70px minmax(0,1fr);}
+ .hrow .mark,.hhead .hm{display:none}
+}
+.sel{appearance:none;-webkit-appearance:none;width:100%;min-height:44px;padding:8px 40px 8px 14px;background:#FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231A1A1A' stroke-width='1.8'/%3E%3C/svg%3E") no-repeat right 14px center;border:1px solid #1A1A1A;border-radius:3px;color:#1A1A1A;font:inherit;font-size:15px;cursor:pointer}
+.sel:focus-visible{outline:2px solid #EB0A1E;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="min-height:100vh;background:#FFFFFF;">
+
+  <header style="background:#1F2225;color:#FFFFFF;padding-block:56px 52px;">
+    <div class="wrap" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:720px;">
+        <h1 style="margin:0;font-size:clamp(34px,5vw,52px);font-weight:700;line-height:1.05;letter-spacing:-0.01em;">Maintenance Schedule</h1>
+        <p style="margin:0;font-size:17px;line-height:1.5;color:#E6E7E8;">Choose your Toyota, enter the odometer reading, and see which service it's due for and what's included. Model years 2001 to 2026.</p>
+      </div>
+      <a class="btn-red" href="https://erinpark.ca01.netdirector-test.link/book-a-service/" target="_blank" rel="noopener">Request a Service Appointment</a>
+    </div>
+  </header>
+
+  <div style="background:#F5F5F5;padding-block:32px 56px;">
+    <div class="wrap" style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;">
+
+      <form id="vehicle-form" style="flex:1 1 300px;max-width:100%;background:#FFFFFF;border:1px solid #D9D9D9;border-radius:2px;padding:24px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;">
+          <h2 style="margin:0;font-size:24px;font-weight:500;">Your vehicle</h2>
+          <button type="button" class="linkbtn" id="reset" style="text-decoration:none;">Clear ✕</button>
+        </div>
+        <div class="fgroup">
+          <div class="dd"><label class="lbl" for="year">Year</label><select id="year" class="sel"></select></div>
+          <div class="dd"><label class="lbl" for="model">Model</label><select id="model" class="sel"></select></div>
+          <div class="dd"><label class="lbl" for="trim">Trim / package</label><select id="trim" class="sel"></select></div>
+        </div>
+        <div class="fgroup">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label class="lbl" for="odo">Current odometer</label>
+            <div style="display:flex;gap:8px;">
+              <input id="odo" class="txt odo-in" type="number" inputmode="numeric" min="0" step="100" value="47200">
+              <span class="tab on" style="display:inline-flex;align-items:center;cursor:default;">km</span>
+            </div>
+          </div>
+        </div>
+        <div class="fgroup">
+          <div style="background:#F5F5F5;border:1px solid #E6E6E6;border-radius:2px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;">
+            <span class="muted" style="font-size:13px;">Selected vehicle</span>
+            <strong id="veh-title" style="font-size:18px;font-weight:600;"></strong>
+            <span id="veh-engine" style="font-size:14px;"></span>
+            <div class="chips" id="veh-chips" style="margin-top:4px;"></div>
+          </div>
+        </div>
+      </form>
+
+      <div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:24px;">
+        <section id="order" class="card">
+          <div class="banner" id="banner"></div>
+          <div style="padding:20px 20px 18px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span class="muted" id="eyebrow" style="font-size:13px;"></span>
+              <h2 id="svc-title" style="margin:0;font-size:clamp(28px,4vw,36px);font-weight:500;line-height:1.1;"></h2>
+              <span style="font-size:14px;">Toyota recommends a visit every 8,000 km or 6 months, whichever comes first.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+              <span class="muted" style="font-size:13px;">At odometer</span>
+              <span id="at-km" style="font-size:30px;color:#EB0A1E;font-variant-numeric:tabular-nums;line-height:1.1;"></span>
+              <span class="muted" style="font-size:13px;">or 6 months since the last visit</span>
+            </div>
+          </div>
+          <div id="viewing" hidden style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 20px;background:#EFF0F0;font-size:14px;">
+            <span>You're viewing a visit picked from the schedule.</span>
+            <button type="button" class="linkbtn" id="back">Back to next service</button>
+          </div>
+          <div class="groups" id="groups"></div>
+        </section>
+
+        <section class="card">
+          <div style="padding:20px 20px 14px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;">
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <h2 style="margin:0;font-size:22px;font-weight:500;">Service history &amp; schedule</h2>
+              <p class="hint">Select a visit to see its full checklist.</p>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+              <span class="lv lv1">#1 · 8,000 km</span>
+              <span class="lv lv2">#2 · 16,000 km</span>
+              <span class="lv lv3">#3 · 32,000 km</span>
+            </div>
+          </div>
+          <div class="hhead"><span>Odometer</span><span>Service</span><span>Component work</span><span class="hm"></span></div>
+          <div id="rows"></div>
+          <div style="padding:14px 20px;display:flex;justify-content:center;">
+            <button type="button" class="btn-out" id="toggle-past">Show all earlier visits</button>
+          </div>
+        </section>
+
+        <footer style="font-size:13px;color:#6B6E70;display:flex;flex-direction:column;gap:6px;max-width:90ch;">
+          <p style="margin:0;">Based on Toyota Canada's published structure: a visit every 6 months or 8,000 km, whichever comes first, alternating Service #1, #2 and #3. Component intervals use typical Toyota Canada values per engine and can vary by model year. Confirm against the vehicle's Warranty &amp; Maintenance Guide before quoting a customer.</p>
+        </footer>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Vehicle data and service rules ===== */
+const ENG={
+ '1NZ':{n:'1.5L 4-cyl (1NZ-FE)'},'1NZH':{n:'1.5L 4-cyl Hybrid (1NZ-FXE)',t:'hyb'},'MZ15':{n:'1.5L 4-cyl (Mazda-built)'},
+ '1ZZ':{n:'1.8L 4-cyl (1ZZ-FE)'},'2ZZ':{n:'1.8L 4-cyl (2ZZ-GE)'},'2ZR':{n:'1.8L 4-cyl (2ZR-FE)'},
+ '2ZRH':{n:'1.8L 4-cyl Hybrid (2ZR-FXE)',t:'hyb'},'2ZRP':{n:'1.8L Plug-in Hybrid (2ZR-FXE)',t:'phev'},
+ '3ZR':{n:'2.0L 4-cyl (3ZR-FAE)'},'M20A':{n:'2.0L 4-cyl Dynamic Force (M20A-FKS)'},
+ 'M20AH':{n:'2.0L 4-cyl Hybrid (M20A-FXS)',t:'hyb'},'M20AP':{n:'2.0L Plug-in Hybrid (M20A-FXS)',t:'phev'},
+ '1AZ':{n:'2.0L 4-cyl (1AZ-FE)'},'2AZ':{n:'2.4L 4-cyl (2AZ-FE)'},'2AZH':{n:'2.4L 4-cyl Hybrid (2AZ-FXE)',t:'hyb'},
+ '5SFE':{n:'2.2L 4-cyl (5S-FE)',belt:1,pl:96000},'2AR':{n:'2.5L 4-cyl (2AR-FE)'},'2ARH':{n:'2.5L 4-cyl Hybrid (2AR-FXE)',t:'hyb'},
+ 'A25A':{n:'2.5L 4-cyl Dynamic Force (A25A-FKS)'},'A25AH':{n:'2.5L 4-cyl Hybrid (A25A-FXS)',t:'hyb'},'A25AP':{n:'2.5L Plug-in Hybrid (A25A-FXS)',t:'phev'},
+ '1AR':{n:'2.7L 4-cyl (1AR-FE)'},'2RZ':{n:'2.4L 4-cyl (2RZ-FE)',pl:96000},'3RZ':{n:'2.7L 4-cyl (3RZ-FE)',pl:96000},'2TR':{n:'2.7L 4-cyl (2TR-FE)'},
+ 'T24A':{n:'2.4L Turbo 4-cyl (T24A-FTS)',turbo:1},'T24AH':{n:'2.4L Turbo Hybrid (i-FORCE MAX / Hybrid MAX)',t:'hyb',turbo:1},
+ '1MZ':{n:'3.0L V6 (1MZ-FE)',belt:1},'3MZ':{n:'3.3L V6 (3MZ-FE)',belt:1},'3MZH':{n:'3.3L V6 Hybrid (3MZ-FE)',t:'hyb',belt:1},
+ '5VZ':{n:'3.4L V6 (5VZ-FE)',belt:1,pl:96000},'2GR':{n:'3.5L V6 (2GR-FE / FKS)'},'2GRH':{n:'3.5L V6 Hybrid (2GR-FXE)',t:'hyb'},
+ '1GR':{n:'4.0L V6 (1GR-FE)'},'2UZ':{n:'4.7L V8 (2UZ-FE)',belt:1},'1UR':{n:'4.6L V8 (1UR-FE)'},'3UR':{n:'5.7L V8 (3UR-FE)'},
+ 'V35A':{n:'3.4L Twin-Turbo V6 (V35A-FTS)',turbo:1},'V35AH':{n:'3.4L Twin-Turbo V6 Hybrid (i-FORCE MAX)',t:'hyb',turbo:1},
+ 'B58':{n:'3.0L Turbo 6-cyl (B58)',turbo:1,pl:96000},'B48':{n:'2.0L Turbo 4-cyl (B48)',turbo:1,pl:96000},
+ 'FA20':{n:'2.0L Boxer 4-cyl (FA20)',pl:96000},'FA24':{n:'2.4L Boxer 4-cyl (FA24)',pl:96000},
+ 'G16E':{n:'1.6L Turbo 3-cyl (G16E-GTS)',turbo:1,pl:96000},'BEV':{n:'Battery electric (no engine)',t:'bev'}
+};
+const G=(a,b,s)=>({a,b,trims:s.split('|').flatMap(g=>{const p=g.split(':');return p[0].split(',').map(x=>({n:x.trim(),e:p[1],d:p[2]}))})});
+const MODELS=[
+ {n:'4Runner',c:'truck',g:[G(2001,2002,'SR5,Limited:5VZ:4WD'),G(2003,2009,'SR5,Trail,Limited:1GR:4WD|SR5 V8,Limited V8:2UZ:4WD'),G(2010,2024,'SR5,Trail,TRD Off-Road,Limited,TRD Pro,Nightshade:1GR:4WD'),G(2025,2026,'SR5,TRD Sport,TRD Off-Road,Limited:T24A:4WD|TRD Pro,Trailhunter,Platinum:T24AH:4WD')]},
+ {n:'86 / GR86',c:'car',g:[G(2017,2020,'86,86 GT:FA20:RWD'),G(2022,2026,'GR86,GR86 Premium:FA24:RWD')]},
+ {n:'Avalon',c:'car',g:[G(2001,2004,'XL,XLS:1MZ:FWD'),G(2005,2012,'XL,XLS,Touring,Limited:2GR:FWD'),G(2013,2018,'Touring,Limited:2GR:FWD|Hybrid Limited:2ARH:FWD')]},
+ {n:'bZ4X / bZ',c:'suv',g:[G(2023,2025,'L,LE:BEV:FWD|XLE AWD,XLE Technology AWD:BEV:AWD'),G(2026,2026,'XLE FWD:BEV:FWD|XLE AWD,Limited AWD:BEV:AWD')]},
+ {n:'C-HR',c:'suv',g:[G(2018,2022,'C-HR,XLE,Limited:3ZR:FWD')]},
+ {n:'Camry',c:'car',g:[G(2001,2001,'CE,LE:5SFE:FWD|LE V6,XLE V6:1MZ:FWD'),G(2002,2003,'CE,LE,SE:2AZ:FWD|LE V6,SE V6,XLE V6:1MZ:FWD'),G(2004,2006,'LE,SE:2AZ:FWD|LE V6,XLE V6:1MZ:FWD|SE V6:3MZ:FWD'),G(2007,2009,'CE,LE,SE:2AZ:FWD|LE V6,SE V6,XLE V6:2GR:FWD'),G(2010,2011,'LE,SE,XLE:2AR:FWD|SE V6,XLE V6:2GR:FWD'),G(2012,2017,'LE,SE,XLE:2AR:FWD|XSE V6,XLE V6:2GR:FWD'),G(2018,2019,'LE,SE,XSE,XLE:A25A:FWD|XSE V6,XLE V6:2GR:FWD'),G(2020,2024,'LE,SE,XSE,XLE:A25A:FWD|SE AWD,XLE AWD,XSE AWD:A25A:AWD|XSE V6,XLE V6,TRD:2GR:FWD'),G(2025,2026,'LE:A25AH:FWD|SE,SE Upgrade,XSE,XLE:A25AH:AWD')]},
+ {n:'Camry Hybrid',c:'car',g:[G(2007,2011,'Hybrid:2AZH:FWD'),G(2012,2017,'LE,XLE:2ARH:FWD'),G(2018,2024,'LE,SE,XLE,XSE:A25AH:FWD')]},
+ {n:'Camry Solara',c:'car',g:[G(2001,2001,'SE:5SFE:FWD|SE V6,SLE V6:1MZ:FWD'),G(2002,2003,'SE:2AZ:FWD|SE V6,SLE V6:1MZ:FWD'),G(2004,2008,'SE,SLE:2AZ:FWD|SE V6,SLE V6:3MZ:FWD')]},
+ {n:'Celica',c:'car',g:[G(2001,2005,'GT:1ZZ:FWD|GT-S:2ZZ:FWD')]},
+ {n:'Corolla',c:'car',g:[G(2001,2002,'CE,LE,S:1ZZ:FWD'),G(2003,2004,'CE,LE,S,Sport:1ZZ:FWD'),G(2005,2006,'CE,LE,S:1ZZ:FWD|XRS:2ZZ:FWD'),G(2007,2008,'CE,LE,S:1ZZ:FWD'),G(2009,2010,'CE,LE,S:2ZR:FWD|XRS:2AZ:FWD'),G(2011,2013,'CE,LE,S:2ZR:FWD'),G(2014,2019,'CE,LE,S,SE,XSE:2ZR:FWD'),G(2020,2022,'L,LE,LE Upgrade:2ZR:FWD|SE,XSE:M20A:FWD'),G(2023,2026,'LE,SE,XSE:M20A:FWD')]},
+ {n:'Corolla Cross',c:'suv',g:[G(2022,2026,'L,LE:M20A:FWD|LE AWD,XLE AWD:M20A:AWD')]},
+ {n:'Corolla Cross Hybrid',c:'suv',g:[G(2023,2026,'S,SE,XSE:M20AH:AWD')]},
+ {n:'Corolla Hatchback',c:'car',g:[G(2019,2026,'Hatchback,SE,XSE,Nightshade:M20A:FWD')]},
+ {n:'Corolla Hybrid',c:'car',g:[G(2020,2022,'Hybrid:2ZRH:FWD'),G(2023,2026,'Hybrid LE:2ZRH:FWD|LE AWD,SE AWD,XSE AWD:2ZRH:AWD')]},
+ {n:'Corolla iM',c:'car',g:[G(2017,2018,'iM:2ZR:FWD')]},
+ {n:'Crown',c:'car',g:[G(2023,2026,'XLE,Limited:A25AH:AWD|Platinum:T24AH:AWD')]},
+ {n:'Crown Signia',c:'suv',g:[G(2025,2026,'XLE,Limited:A25AH:AWD')]},
+ {n:'Echo',c:'car',g:[G(2001,2005,'Sedan,Hatchback:1NZ:FWD')]},
+ {n:'FJ Cruiser',c:'truck',g:[G(2007,2014,'FJ Cruiser,Trail Teams:1GR:4WD')]},
+ {n:'GR Corolla',c:'car',g:[G(2023,2026,'Core,Premium,Circuit Edition,MORIZO Edition:G16E:AWD')]},
+ {n:'Grand Highlander',c:'suv',g:[G(2024,2026,'XLE,Limited:T24A:AWD|XLE Hybrid,Limited Hybrid,Platinum Hybrid:A25AH:AWD|Hybrid MAX Limited,Hybrid MAX Platinum:T24AH:AWD')]},
+ {n:'Highlander',c:'suv',g:[G(2001,2003,'4-cyl:2AZ:FWD|V6,V6 Limited:1MZ:AWD'),G(2004,2007,'4-cyl:2AZ:FWD|V6,Sport,Limited:3MZ:AWD'),G(2008,2013,'4-cyl:1AR:FWD|V6,Sport,Limited:2GR:AWD'),G(2014,2019,'LE 4-cyl:1AR:FWD|LE V6,XLE,SE,Limited:2GR:AWD'),G(2020,2022,'L,LE,XLE,XSE,Limited,Platinum:2GR:AWD'),G(2023,2026,'LE,XLE,XSE,Limited,Platinum:T24A:AWD')]},
+ {n:'Highlander Hybrid',c:'suv',g:[G(2006,2010,'Hybrid,Hybrid Limited:3MZH:AWD'),G(2011,2019,'Hybrid,Hybrid Limited,Hybrid XLE:2GRH:AWD'),G(2020,2026,'LE,XLE,XSE,Limited,Platinum:A25AH:AWD')]},
+ {n:'Land Cruiser',c:'truck',g:[G(2025,2026,'Land Cruiser,First Edition:T24AH:4WD')]},
+ {n:'Matrix',c:'car',g:[G(2003,2008,'Base,XR:1ZZ:FWD|XR AWD:1ZZ:AWD|XRS:2ZZ:FWD'),G(2009,2014,'Base,S:2ZR:FWD|AWD:2AZ:AWD|XRS:2AZ:FWD')]},
+ {n:'MR2 Spyder',c:'car',g:[G(2001,2005,'Spyder:1ZZ:RWD')]},
+ {n:'Prius',c:'car',g:[G(2001,2003,'Prius:1NZH:FWD'),G(2004,2009,'Prius,Touring:1NZH:FWD'),G(2010,2015,'Prius,Touring,Technology:2ZRH:FWD'),G(2016,2018,'Prius,Technology,Touring:2ZRH:FWD'),G(2019,2022,'Prius,Technology:2ZRH:FWD|AWD-e,AWD-e Technology:2ZRH:AWD'),G(2023,2026,'XLE,Limited:M20AH:AWD')]},
+ {n:'Prius c',c:'car',g:[G(2012,2019,'Prius c,Technology:1NZH:FWD')]},
+ {n:'Prius Plug-in / Prime',c:'car',g:[G(2012,2015,'Plug-in Hybrid:2ZRP:FWD'),G(2017,2022,'Prime,Upgrade,Technology:2ZRP:FWD'),G(2023,2026,'SE,XSE,XSE Premium:M20AP:FWD')]},
+ {n:'Prius v',c:'car',g:[G(2012,2017,'Prius v,Touring:2ZRH:FWD')]},
+ {n:'RAV4',c:'suv',g:[G(2001,2003,'2WD:1AZ:FWD|4WD:1AZ:AWD'),G(2004,2005,'2WD:2AZ:FWD|4WD:2AZ:AWD'),G(2006,2012,'Base 2WD:2AZ:FWD|Base 4WD,Sport 4WD,Limited 4WD:2AZ:AWD|Sport V6,Limited V6:2GR:AWD'),G(2013,2018,'LE FWD:2AR:FWD|LE AWD,XLE AWD,SE AWD,Limited AWD:2AR:AWD'),G(2019,2025,'LE FWD:A25A:FWD|LE AWD,XLE,Trail,Limited,TRD Off-Road:A25A:AWD')]},
+ {n:'RAV4 Hybrid',c:'suv',g:[G(2016,2018,'XLE,SE,Limited:2ARH:AWD'),G(2019,2025,'LE,XLE,XSE,Limited,Woodland:A25AH:AWD'),G(2026,2026,'LE,XLE,SE,Woodland,Limited:A25AH:AWD')]},
+ {n:'RAV4 Prime / PHEV',c:'suv',g:[G(2021,2025,'SE,XSE,XSE Technology:A25AP:AWD'),G(2026,2026,'SE,XSE,GR SPORT:A25AP:AWD')]},
+ {n:'Sequoia',c:'truck',g:[G(2001,2007,'SR5,Limited:2UZ:4WD'),G(2008,2009,'SR5 4.7:2UZ:4WD|SR5 5.7,Limited,Platinum:3UR:4WD'),G(2010,2012,'SR5 4.6:1UR:4WD|SR5 5.7,Limited,Platinum:3UR:4WD'),G(2013,2022,'SR5,Limited,Platinum,TRD Pro,Nightshade:3UR:4WD'),G(2023,2026,'SR5,Limited,Platinum,TRD Pro,Capstone:V35AH:4WD')]},
+ {n:'Sienna',c:'van',g:[G(2001,2003,'CE,LE,XLE:1MZ:FWD'),G(2004,2006,'CE,LE,XLE:3MZ:FWD|LE AWD,XLE AWD:3MZ:AWD'),G(2007,2010,'CE,LE,XLE:2GR:FWD|LE AWD,XLE AWD,Limited AWD:2GR:AWD'),G(2011,2020,'CE,LE,SE,XLE,Limited:2GR:FWD|LE AWD,XLE AWD,Limited AWD:2GR:AWD'),G(2021,2026,'LE,XLE:A25AH:FWD|LE AWD,XSE AWD,XLE AWD,Limited AWD,Platinum AWD,Woodland:A25AH:AWD')]},
+ {n:'Supra',c:'car',g:[G(2020,2020,'3.0,3.0 Premium:B58:RWD'),G(2021,2026,'2.0:B48:RWD|3.0,3.0 Premium:B58:RWD')]},
+ {n:'Tacoma',c:'truck',g:[G(2001,2004,'Regular Cab:2RZ:RWD|Xtracab 4x4:3RZ:4WD|PreRunner V6:5VZ:RWD|V6 4x4,TRD Off-Road V6:5VZ:4WD'),G(2005,2015,'Regular Cab:2TR:RWD|Access Cab 4x4:2TR:4WD|V6 TRD Sport,V6 TRD Off-Road,V6 Limited:1GR:4WD'),G(2016,2023,'SR,SR5:2TR:4WD|SR5 V6,TRD Sport,TRD Off-Road,Limited,TRD Pro:2GR:4WD'),G(2024,2026,'SR,SR5,TRD Sport,TRD Off-Road,Limited:T24A:4WD|TRD Off-Road i-FORCE MAX,Limited i-FORCE MAX,TRD Pro,Trailhunter:T24AH:4WD')]},
+ {n:'Tundra',c:'truck',g:[G(2001,2004,'V6:5VZ:RWD|SR5 V8,Limited V8:2UZ:4WD'),G(2005,2006,'V6:1GR:RWD|SR5 V8,Limited V8:2UZ:4WD'),G(2007,2009,'4.0 V6:1GR:RWD|SR5 4.7:2UZ:4WD|SR5 5.7,Limited 5.7:3UR:4WD'),G(2010,2014,'4.0 V6:1GR:RWD|SR5 4.6:1UR:4WD|SR5 5.7,Limited,Platinum:3UR:4WD'),G(2015,2019,'SR 4.6:1UR:4WD|SR5,TRD Pro,Limited,Platinum,1794 Edition:3UR:4WD'),G(2020,2021,'SR5,TRD Pro,Limited,Platinum,1794 Edition:3UR:4WD'),G(2022,2026,'SR,SR5,Limited:V35A:4WD|Limited i-FORCE MAX,Platinum,1794 Edition,TRD Pro,Capstone:V35AH:4WD')]},
+ {n:'Venza',c:'suv',g:[G(2009,2015,'4-cyl FWD:1AR:FWD|4-cyl AWD:1AR:AWD|V6 AWD:2GR:AWD'),G(2021,2024,'LE,XLE,Limited:A25AH:AWD')]},
+ {n:'Yaris',c:'car',g:[G(2006,2011,'CE,LE,RS:1NZ:FWD'),G(2012,2015,'CE,LE,SE:1NZ:FWD'),G(2016,2018,'Hatchback CE,Hatchback LE,Hatchback SE:1NZ:FWD|Sedan:MZ15:FWD'),G(2019,2019,'Hatchback CE,Hatchback LE,Hatchback SE:1NZ:FWD|Sedan,Sedan LE:MZ15:FWD'),G(2020,2020,'Hatchback LE,Hatchback XSE,Sedan LE,Sedan XLE:MZ15:FWD')]}
+];
+const fmt=n=>Math.round(n).toLocaleString('en-CA');
+const typ=v=>ENG[v.e].t||'gas';
+const isIce=v=>typ(v)!=='bev';
+const fourwd=v=>v.d==='AWD'||v.d==='4WD';
+const sllc=v=>v.y>=2005||typ(v)==='hyb'||typ(v)==='phev';
+const plugKm=v=>ENG[v.e].pl||192000;
+const coolantDue=(v,km)=>{if(!isIce(v))return false;if(!sllc(v))return km%96000===0;return km===160000||(km>160000&&(km-160000)%80000===0)};
+const MS=[
+ {k:'belt',l:()=>'Timing belt (inspect water pump & tensioner)',chip:'Timing belt',t:(v,km)=>!!ENG[v.e].belt&&km%144000===0},
+ {k:'plugs',l:v=>plugKm(v)===96000?'Spark plugs':'Spark plugs (iridium)',chip:'Spark plugs',t:(v,km)=>isIce(v)&&km%plugKm(v)===0},
+ {k:'cool',l:v=>typ(v)==='gas'?(sllc(v)?'Engine coolant (Super Long Life)':'Engine coolant'):'Engine and inverter coolant',chip:'Coolant',t:coolantDue},
+ {k:'brake',l:()=>'Brake fluid (flush and bleed)',chip:'Brake fluid',t:(v,km)=>km%64000===0},
+ {k:'diff',l:v=>v.c==='truck'?'Transfer case and front/rear differential oil':'Transfer / rear differential oil',chip:'Diff oil',t:(v,km,s)=>fourwd(v)&&isIce(v)&&km%(s?32000:96000)===0},
+ {k:'atf',l:()=>'Automatic transmission / CVT fluid (severe use)',chip:'ATF',t:(v,km,s)=>s&&isIce(v)&&km%96000===0},
+ {k:'air',l:()=>'Engine air filter',chip:'Air filter',t:(v,km,s)=>isIce(v)&&km%(s?32000:48000)===0},
+ {k:'cabin',l:()=>'Cabin air filter',chip:'Cabin filter',t:(v,km)=>km%24000===0},
+ {k:'efi',l:()=>'Combustion & fuel injector system cleaning',chip:'Fuel system',rec:1,t:(v,km)=>isIce(v)&&km%80000===0}
+];
+const level=km=>km%32000===0?3:km%16000===0?2:1;
+const genFor=(m,y)=>m.g.find(g=>y>=g.a&&y<=g.b);
+function buildService(v,km,sev){
+  const t=typ(v),ice=isIce(v),L=level(km),E=ENG[v.e];
+  const R=[],P=[],I=[],C=[],chips=[],due={};
+  MS.forEach(m=>{if(m.t(v,km,sev)){due[m.k]=1;(m.rec?C:R).push({txt:m.l(v)});chips.push({c:m.chip,cls:m.rec?'rec':''})}});
+  if(ice)R.unshift({txt:'Engine oil and oil filter'});
+  P.push({txt:'Rotate tires and set pressures'});
+  I.push({txt:'Check and top up all fluid levels'},{txt:'Brake pads, rotors and drums / linings'},{txt:'Wiper blades and washer system'},{txt:'Tires, lights and horn (multi-point inspection)'},{txt:"Driver's floor mat installation"});
+  if(v.c==='truck'&&fourwd(v)&&v.y<=2015)P.push({txt:'Lubricate propeller shaft grease fittings'});
+  if(L>=2){
+    I.push({txt:'Ball joints and dust covers'},{txt:'Brake lines and hoses'},{txt:'Drive shaft boots'},{txt:'Steering gear, linkage and boots'},{txt:'Radiator and condenser'});
+    if(ice)I.push({txt:'Exhaust pipes and mountings'},{txt:'Fuel lines and connections'});
+    if(ice&&!due.cool)I.push({txt:'Engine coolant level and condition'});
+    if(ice&&!due.air)I.push({txt:'Engine air filter'});
+    if(!due.cabin)I.push({txt:'Cabin air filter'});
+    if((t==='hyb'||t==='phev')&&v.y>=2016)P.push({txt:'Clean hybrid battery cooling-air intake filter'});
+    if(t==='phev'||t==='bev')I.push({txt:'Charging port, inlet and charge cable'});
+    if(sev&&v.c==='truck')P.push({txt:'Tighten chassis and body bolts'});
+    C.push({txt:'A/C refresher service (every 12 months / 16,000 km)'});
+  }
+  if(L===3){
+    P.push({txt:'12-volt battery service and charging system test'});
+    if(t==='gas')I.push({txt:'Drive belts'});
+    if(ice)I.push({txt:'Fuel tank cap gasket and vapour vent hoses'},{txt:'Transmission for leaks'});
+    else I.push({txt:'Reduction gear for leaks'});
+    if(fourwd(v)&&!due.diff&&ice)I.push({txt:v.c==='truck'?'Transfer case and differential oil':'Transfer / rear differential oil'});
+    if(t==='hyb'||t==='phev')I.push({txt:'Inverter coolant level and hybrid system check'});
+    if(t==='bev')I.push({txt:'High-voltage battery coolant level'});
+    if(E.turbo)I.push({txt:'Intercooler and charge-air hoses'});
+  }
+  return {L,R,P,I,C,chips};
+}
+function nextKmOf(m,v,from,sev){for(let k=Math.max(8000,Math.ceil(from/8000)*8000);k<=480000;k+=8000)if(m.t(v,k,sev))return k;return null}
+const DEFAULTS={y:2019,m:'RAV4',t:'LE AWD',odo:'47200',last:'',unit:'km',sev:false,sel:null,open:null,touched:false,showPast:false};
+const TYPE={gas:'Gasoline',hyb:'Hybrid',phev:'Plug-in hybrid',bev:'Battery electric'};
+const BODY={car:'Car',suv:'SUV / crossover',van:'Minivan',truck:'Truck / body-on-frame'};
+const LVDESC={1:'Base visit: oil and filter, tire rotation and a visual inspection.',2:'Adds a mechanical inspection of steering, suspension, brakes, exhaust and filters.',3:'Adds 12-volt battery service, belts, fuel system and drivetrain checks to #1 and #2.'};
+
+/* ===== Page logic ===== */
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var KEY='toyota-maint-menu';
+  var DEF={y:2019,m:'RAV4',t:'LE AWD',odo:'47200',showPast:false};
+  var st=Object.assign({},DEF,{sel:null});
+  try{var saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)st=Object.assign(st,{y:+saved.y||DEF.y,m:saved.m||DEF.m,t:saved.t||DEF.t,odo:saved.odo!=null?saved.odo:DEF.odo,showPast:!!saved.showPast})}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({y:st.y,m:st.m,t:st.t,odo:st.odo,showPast:st.showPast}))}catch(e){}}
+
+  function resolve(){
+    var y=+st.y;
+    var avail=MODELS.filter(function(m){return genFor(m,y)});
+    var model=avail.find(function(m){return m.n===st.m})||avail[0];
+    var trims=genFor(model,y).trims;
+    var tr=trims.find(function(x){return x.n===st.t})||trims[0];
+    st.m=model.n;st.t=tr.n;
+    return {avail:avail,model:model,trims:trims,tr:tr,v:{y:y,model:model.n,c:model.c,trim:tr.n,e:tr.e,d:tr.d}};
+  }
+  function fillSelects(r){
+    var ys='';for(var yy=2026;yy>=2001;yy--)ys+='<option value="'+yy+'"'+(yy===r.v.y?' selected':'')+'>'+yy+'</option>';
+    $('year').innerHTML=ys;
+    $('model').innerHTML=r.avail.map(function(m){return '<option value="'+esc(m.n)+'"'+(m.n===r.model.n?' selected':'')+'>'+esc(m.n)+'</option>'}).join('');
+    $('trim').innerHTML=r.trims.map(function(t){return '<option value="'+esc(t.n)+'"'+(t.n===r.tr.n?' selected':'')+'>'+esc(t.n+' · '+t.d)+'</option>'}).join('');
+  }
+
+  function render(){
+    var r=resolve(),v=r.v,E=ENG[v.e];
+    fillSelects(r);
+    var km=Math.max(0,+st.odo||0);
+    var next=km<8000?8000:Math.ceil(km/8000)*8000;
+    var selKm=st.sel&&st.sel!==next?st.sel:next;
+    var isNext=selKm===next;
+    var svc=buildService(v,selKm,false);
+
+    $('veh-title').textContent=v.y+' '+v.model+' '+v.trim;
+    $('veh-engine').textContent=E.n;
+    $('veh-chips').innerHTML=[TYPE[typ(v)],v.d,BODY[v.c]].map(function(c){return '<span class="chip">'+esc(c)+'</span>'}).join('');
+
+    var rem=selKm-km,banner,cls;
+    if(selKm<=km-800){banner='Past visit · '+fmt(km-selKm)+' km ago';cls='b-past'}
+    else if(rem<=800){banner=rem>0?'Due now · '+fmt(rem)+' km to go':'Due now';cls='b-due'}
+    else{banner='Due in '+fmt(rem)+' km or 6 months, whichever comes first';cls='b-soon'}
+    $('banner').className='banner '+cls;$('banner').textContent=banner;
+    $('eyebrow').textContent=isNext?'Next service':'Selected service';
+    $('svc-title').textContent='Toyota Service #'+svc.L;
+    $('at-km').textContent=fmt(selKm)+' km';
+    $('viewing').hidden=isNext;
+
+    var groups=[['Replace','replace',svc.R],['Perform','perform',svc.P],['Inspect','inspect',svc.I],['Dealer recommended','rec',svc.C]].filter(function(g){return g[2].length});
+    $('groups').innerHTML=groups.map(function(g){
+      return '<div class="grp k-'+g[1]+'"><h3>'+g[0]+' <span>'+g[2].length+'</span></h3><ul>'+g[2].map(function(i){return '<li><span>'+esc(i.txt)+'</span></li>'}).join('')+'</ul></div>';
+    }).join('');
+
+    var start=st.showPast?8000:Math.max(8000,next-24000),end=next+48000,html='';
+    for(var k=start;k<=end;k+=8000){
+      var b=buildService(v,k,false);
+      var rc=[k<next?'past':'',k===next?'next':'',k===selKm?'sel':''].join(' ');
+      html+='<button type="button" class="hrow '+rc+'" data-km="'+k+'">'+
+        '<span class="kmc">'+fmt(k)+' km</span>'+
+        '<span><span class="lv lv'+b.L+'">Service #'+b.L+'</span></span>'+
+        '<span class="chips">'+b.chips.map(function(c){return '<span class="chip '+c.cls+'">'+esc(c.c)+'</span>'}).join('')+'</span>'+
+        '<span class="mark '+(k===next?'n':'')+'">'+(k===next?'Next':(k<next?'Past':''))+'</span></button>';
+    }
+    $('rows').innerHTML=html;
+    $('toggle-past').textContent=st.showPast?'Hide earlier visits':'Show all earlier visits';
+    save();
+  }
+
+  $('year').addEventListener('change',function(e){st.y=+e.target.value;st.sel=null;render()});
+  $('model').addEventListener('change',function(e){st.m=e.target.value;st.sel=null;render()});
+  $('trim').addEventListener('change',function(e){st.t=e.target.value;st.sel=null;render()});
+  $('odo').addEventListener('input',function(e){st.odo=e.target.value;st.sel=null;render()});
+  $('vehicle-form').addEventListener('submit',function(e){e.preventDefault()});
+  $('reset').addEventListener('click',function(){try{localStorage.removeItem(KEY)}catch(e){}st=Object.assign({},DEF,{sel:null});$('odo').value=st.odo;render()});
+  $('back').addEventListener('click',function(){st.sel=null;render()});
+  $('toggle-past').addEventListener('click',function(){st.showPast=!st.showPast;render()});
+  $('rows').addEventListener('click',function(e){
+    var row=e.target.closest('.hrow');if(!row)return;
+    st.sel=+row.getAttribute('data-km');render();
+    var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('order').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+  });
+
+  $('odo').value=st.odo;
+  render();
+})();
+</script>
+</body>
+</html>
